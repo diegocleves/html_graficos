@@ -37,7 +37,6 @@ st.markdown(
 
 # Sidebar menu
 secciones = [
-    "Estado del Arte",
     "Contexto",
     "Metodología",
     "Objetivos del proyecto",
