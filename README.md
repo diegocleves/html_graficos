@@ -1,3 +1,3 @@
-Bienvenido, en este repositorio se presenta parte de lo entregado para la asigantura Visualización para Ciencia de Datos en Python. Tiene dos ramas, una dedicada
+Bienvenido, en este repositorio se presenta parte de lo entregado para la asigantura Visualización para Ciencia de Datos en Python. Tiene tres ramas, una dedicada
 al primer corte, cuyo enfoque fueron los siniestros relacionados con bicicletas en Reino Unido, y otra relacionada al acceso a servicios de saneamiento e higiene, 
-y hacinamiento, en Colombia, en 2020 y 2024. Se usaron las siguientes librerías: Numpy, pandas, plotly, streamlit, folium, geopy y ngrok.
+y hacinamiento, en Colombia, en 2020 y 2024. Se usaron las siguientes librerías: Numpy, pandas, plotly, streamlit, folium, geopy y ngrok. En la tercera, comparto una investigación personal sobre la generación de datos sintéticos, en la cual, además de las librerías ya mentadas, utilicé las siguientes: distfit, scipy, scikit-learn, svd y statsmodels.
