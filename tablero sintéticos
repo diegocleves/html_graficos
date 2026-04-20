@@ -1,0 +1,534 @@
+%%capture
+!pip install streamlit-folium
+!pip install geopy
+!pip install streamlit pyngrok
+!pip install ngrok
+!pip install streamlit
+!pip install streamlit-aggrid
+!pip install streamlit requests pillow
+# @title Presentación Streamlit
+streamlit_code = """
+import streamlit as st
+import pandas as pd
+import plotly.graph_objects as go
+import numpy as np
+
+# Logo or image in the sidebar
+st.sidebar.image(
+    "https://revistaartefacto.usta.edu.co/images/LOGO-USTA-2021-Ng.png",
+    use_container_width=False
+)
+# Sidebar dorada
+st.markdown(
+    '''
+    <style>
+    section[data-testid="stSidebar"] {
+        background-color: #F6C026 !important;
+    }
+    div[data-testid="stSidebarContent"] {
+        background-color: #F6C026 !important;
+        color: black !important;
+    }
+    </style>
+    ''',
+    unsafe_allow_html=True
+)
+
+# ==== Barra azul fija tipo encabezado institucional ====
+st.markdown(
+    '''
+     <style>
+    .top-banner {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 28px;
+        background-color: #1C3A72;
+        z-index: 9999;
+    }
+    .block-container {
+        padding-top: 40px !important;
+    }
+    </style>
+
+    <div class="top-banner"></div>
+    ''',
+    unsafe_allow_html=True
+)
+# Sidebar menu
+secciones = [
+    "Presentación",
+    "Estado del Arte",
+    "Metodología",
+    "Objetivos del proyecto",
+    "Marco teórico",
+    "Estadística exploratoria y descriptiva",
+    "Simulación de variables categóricas y entropía",
+    "Simulación de variables numéricas y el trilema de los datos sintéticos",
+    "Referencias",
+]
+
+st.markdown(
+    "<h1 style='text-align: center;'>Datos Sintéticos: Introducción a Técnicas Generativas y Medidas de Calidad</h1>",
+    unsafe_allow_html=True
+)
+st.markdown("<hr class='custom-blue-line'>", unsafe_allow_html=True)
+seccion_seleccionada = st.sidebar.radio("Selecciona una sección", secciones)
+# Secciones básicas
+if seccion_seleccionada == "Presentación":
+    st.markdown(
+    '''
+    <div style='text-align: center;'>
+        <h3>Presentado por:</h3>
+        <h3>Diego Andrés Cleves Leguízamo</h3>
+    </div>
+    ''',
+    unsafe_allow_html=True
+)
+elif seccion_seleccionada == "Estado del Arte":
+    st.header("Estado del Arte")
+    st.markdown("Los elementos aplicados en este proyecto no constituyen desarrollos propios, sino que son el resultado de investigaciones previas. En reconocimiento a sus aportes, presentamos un resumen estos")
+    st.markdown("Instrucciones de uso: oprima el nombre del autor o autora y se desplegará el resumen de su artículo.")
+    st.markdown(
+    '''
+    <style>
+    /* Fondo del encabezado del expander */
+    div[role="button"] {
+        background-color: #3399ff !important;
+        color: white;
+        border-radius: 5px;
+        padding: 8px;
+        font-weight: bold;
+    }
+
+    /* Fondo del contenido dentro del expander */
+    div[data-testid="stExpanderContent"] {
+        background-color: #3399ff;
+        color: white;
+        border-radius: 5px;
+        padding: 10px;
+    }
+    </style>
+    ''',
+    unsafe_allow_html=True
+)
+
+    with st.expander("Claude E. Shannon (1948) — A Mathematical Theory of Communication"):
+      st.markdown("Considerado el trabajo fundacional de la teoría de la información, este texto de 55 páginas sembró las semillas de la computación, digitalización e inteligencia artificial. Proporcionó el marco teórico de la era digital.")
+
+    with st.expander("Ronald Rubin (1993) — Statistical Disclosure Limitation"):
+      st.markdown("Inspirado en los métodos de imputación de datos faltantes, en 1978 Rubin propuso la generación de datos sintéticos, los cuales permitirían proteger la privacidad de las personas y facilitar la divulgación de la estadística.")
+
+    with st.expander("Chong K. Liew, Uinam J. Choi y Chung J. Liew (1985) — A data distortion by probability distribution"):
+      st.markdown("Ensayo fundacional de la generación de datos sintéticos en la Ciencia Computacional. En él proponen los primeros métodos y medidas de calidad de esta disciplina. Aunque menos reconocidos que Shannon y Rubin sus aportes no fueron pocos.")
+
+    with st.expander("Joerg Drechsler y Anna-Carolina Haensch (2023) — 30 Years of Synthetic Data"):
+      st.markdown("Artículo que recopila la historia de la generación de datos sintéticos de 1993 a 2023. Su valor radica en las referencias que hace de los trabajos más importantes de esta disciplina.")
+
+    with st.expander("Cynthia Dwork y Aaron Roth (2014) — The Algorithmic Foundations of Differential Privacy"):
+      st.markdown("En este libro se compila buena parte de la literatura dedicada a la privacidad diferencial, una metodología en la cual se agrega ruido a los datos que se desean enmascarar con el fin de complicar su detección.")
+
+    with st.expander("Joshua Snoke et al (2018) — Combining propensity score methods with variational autoencoders for generating synthetic data in presence of latent sub‑groups"):
+      st.markdown("Este estudio identifica primero un problema inherente a sintetización de datos: la invisibilización de subgrupos cuya probabilidad de ser seleccionados es un evento cero.")
+
+elif seccion_seleccionada == "Metodología":
+    st.markdown("<h3 style='text-align: center;'>Metodología</h3>", unsafe_allow_html=True)
+    tab1,tab2 = st.tabs(["Manejo de datos faltantes", "Generación de datos sintéticos"])
+    with tab1:
+      diagrama_faltantes_estilizado = '''
+      digraph G {
+      // Configuración general del gráfico
+      rankdir=TB; // Top to Bottom direction
+      splines=polyline; // Use straight lines with elbow bends for neater layout
+      node [fontname="Helvetica", fontsize=10, penwidth=1.5]; // Default font and border thickness
+      edge [fontname="Helvetica", fontsize=9, fontcolor="#555555"]; // Default edge style
+
+      // =====================================
+      // Estilos y Definición de Nodos
+      // =====================================
+
+      // --- ESTILO 1: Nodos de Inicio, Fin y Convergencia (Morado, Redondeados) ---
+      node [shape=Mrecord, style="filled", fillcolor="#D8BFD8", color="#4B0082"];
+      n1 [label="Identificar capa o nivel de los datos"];
+      cont [label="Continuar con la siguiente etapa"];
+      b2 [label="Finalizar el proceso"];
+
+      // --- ESTILO 2: Nodos de Proceso/Actividad (Verde, Rectangulares) ---
+      node [shape=box, style="filled", fillcolor="#E6F2E6", color="#006400"];
+      n2 [label="Detectar valores faltantes"];
+      a1 [label="Identificar características estadísticas de los datos incompletos"];
+      a2 [label="Imputar los datos"];
+      b1 [label="Filtrar datos útiles para un nuevo planteamiento"];
+
+      // --- ESTILO 3: Nodos de Decisión (Beige, Rombos) ---
+      // Aumentamos un poco el 'height' para que el texto quepa bien en el rombo
+      node [shape=diamond, style="filled", fillcolor="#F2E6CC", color="#8B4513", height=1.2];
+      d1 [label="¿Se identificaron datos faltantes?"];
+      d2 [label="¿Los datos faltantes son relevantes?"];
+      d3 [label="¿Es posible imputarlos?"];
+      d4 [label="¿Puede reformularse la simulación con los datos disponibles?"];
+
+
+      // =====================================
+      // Conexiones (Flujo Lógico)
+      // =====================================
+
+      // Flujo Inicial
+      n1 -> n2 [weight=5]; // Higher weight keeps main flow straight
+      n2 -> d1 [weight=5];
+
+      // --- Ramas de Decisión ---
+
+      // Decisión 1: ¿Hay faltantes?
+      d1:s -> d2 [label="Sí", color="#006400", fontcolor="#006400", weight=5]; // Camino principal "Sí" en verde
+      d1:w -> cont:w [label="No", color="#8B0000", fontcolor="#8B0000"]; // Camino "No" en rojo, conectando por la izquierda
+
+      // Decisión 2: ¿Son relevantes?
+      d2:s -> d3 [label="Sí", color="#006400", fontcolor="#006400", weight=5];
+      d2:w -> cont:w [label="No", color="#8B0000", fontcolor="#8B0000"];
+
+      // Decisión 3: ¿Imputables?
+      // Camino del SÍ (Imputación)
+      d3:e -> a1 [label="Sí", color="#006400", fontcolor="#006400"];
+      a1 -> a2;
+      a2 -> cont:e; // Conecta por la derecha para balancear el gráfico
+
+      // Camino del NO (No imputable)
+      d3:s -> d4 [label="No", color="#8B0000", fontcolor="#8B0000", weight=5];
+
+      // Decisión 4: ¿Reformular?
+      // Camino del SÍ (Reformulación)
+      d4:e -> b1 [label="Sí", color="#006400", fontcolor="#006400"];
+      b1 -> cont:e;
+
+      // Camino del NO (Finalizar)
+      d4:s -> b2 [label="No", color="#8B0000", fontcolor="#8B0000"];
+      }
+      '''
+      st.graphviz_chart(diagrama_faltantes_estilizado, use_container_width=True)
+
+    with tab2:
+      st.markdown('''
+        1. **Analizar riesgos de privacidad**
+        🔹 Identificar posibles brechas que expongan información sensible.
+
+        2. **Verificar proporción de datos reales ≤ 20%**
+        🔹 Asegurar que los datos sintéticos no contengan demasiada información real.
+
+        3. **Evaluar similitud y características estadísticas**
+        🔹 Comparar registros generados con los reales para mantener realismo sin comprometer privacidad.
+
+        4. **Calcular propensión y validar que no supere el 70%**
+        🔹 Evaluar si los datos sintéticos cumplen criterios de similitud y utilidad.
+
+        5. **Comprobar utilidad para entrenamiento**
+        🔹 Determinar si los datos generados son adecuados para entrenar modelos.
+
+        6. **Si alguna condición falla → replantear simulación**
+        🔹 Ajustar parámetros, mejorar similitud y reducir exposición de datos reales.
+
+        7. **Si todo es satisfactorio → aprobar los datos**
+
+''')
+
+
+elif seccion_seleccionada == "Objetivos del proyecto":
+    st.header("Objetivo General")
+    st.markdown("Contrastar las técnicas de generación de datos sintéticos.")
+    st.header("Objetivos Específicos")
+    objetivos = [
+        "Evaluar los datos sintéticos generados de acuerdo a las medidas de calidad investigadas y técnicas generativas usadas.",
+        "Por medio de reducción al absurdo, mostrar errores que se cometen al generar sintéticos.",
+        "Analizar las  medidas de calidad investigadas.",
+        "Analizar e implementar las técnicas generativas investigadas, consideradas pertinentes.",
+
+
+    ]
+    for obj in objetivos:
+        st.markdown(f"- {obj}")
+elif seccion_seleccionada == "Marco teórico":
+    st.markdown("<h3 style='text-align: center;'>Marco teórico</h3>", unsafe_allow_html=True)
+    tab1,tab2,tab3,tab4= st.tabs(["Datos sintéticos ¿qué son?","Antecedentes","Industrias donde son usados","Teoremas y leyes importantes"])
+    with tab1:
+     with st.expander("Definición"):
+      st.markdown("Son datos simulados que replican las características estadísticas de datos reales tales como su distribución empírica, distribución marginal, media, moda, varianza, etc.")
+     with st.expander("Tipos"):
+      st.markdown("Los datos completamente sintéticos son aquellos que en su totalidad fueron simulados.")
+      st.markdown("Los datos parcialmente sintéticos son aquellos que combinan datos provenientes de simulaciones con datos reales.")
+     with st.expander("Ejemplos"):
+      st.markdown("Se han podido replicar datos tabulares, imágenes, series de tiempo,...")
+     with st.expander("Métodos de generación"):
+      data = {
+      'Tipo de Modelo': [
+        'Modelos Basados en Aprendizaje Profundo',
+        'Modelos Basados en Árboles',
+        'Modelos Estadísticos',
+        'Modelos Basados en Reglas'],
+      'Descripción': [
+        'Redes Neuronales como GANs o VAEs aprenden las distribuciones de datos complejos (imágenes, series temporales).',
+        'Random Forests para generar datos categóricos.',
+        'Regresión Lineal o Múltiple para generar datos basados en parámetros estadísticos (medias, covarianzas).',
+        'Generación basada en reglas predefinidas por expertos en el dominio.'],
+      'Ventajas': [
+        'Alta fidelidad en la distribución y relaciones complejas.',
+        'Relativamente simple, rápido y funciona bien para datos tabulares (estructurados).',
+        'Rápidos y fáciles de interpretar.',
+        'Garantiza la plausibilidad física o lógica.'],
+      'Inconvenientes': [
+        'Requieren grandes conjuntos de datos de entrenamiento y alta potencia computacional.',
+        'Puede fallar al capturar relaciones no lineales complejas.',
+        'Tienen baja fidelidad en *datasets* no Gaussianos o con relaciones complejas.',
+        'Puede ser subjetivo y no capturar relaciones estadísticas inesperadas.']}
+      df_metodos = pd.DataFrame(data)
+      st.markdown("Métodos Comunes para la Generación de Datos Sintéticos")
+      st.caption("Resumen de las técnicas más utilizadas, sus fortalezas y debilidades.")
+      st.dataframe(df_metodos, use_container_width=True,hide_index=True)
+    with tab2:
+      with st.expander("Antecedentes en medicina"):
+        st.image("https://cbaglobal.com.ar/wp-content/uploads/2024/06/escuadro-731.jpg",use_container_width=False)
+        st.image("https://www.mcgill.ca/oss/files/oss/styles/hd/public/tuskegee_study.jpg?itok=QaQOKZlx&timestamp=1548275432",use_container_width=False)
+      with st.expander("Antecedentes políticos"):
+        st.image("https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTA60jNQ8axIwmKGqeJJZiwGHq9lT6z7o4hVA&s",use_container_width=False)
+    with tab3:
+      with st.expander("Usados en:"):
+        objetivos = [
+        "Sanidad.",
+        "Ciberseguridad.",
+        "Inteligencia artificial.",
+        "Robótica."]
+        for obj in objetivos:
+          st.markdown(f"- {obj}")
+      with st.expander("Casos de éxito"):
+        st.image("https://i.ytimg.com/vi/C8SQE5EdflY/hq720.jpg?sqp=-oaymwEhCK4FEIIDSFryq4qpAxMIARUAAAAAGAElAADIQj0AgKJD&rs=AOn4CLACrn2scPkBOljsc0GGpMaKz0LShw",use_container_width=False)
+        st.image("https://gomoot.com/wp-content/uploads/2025/08/deepseek3-1.webp",use_container_width=False)
+        st.image("https://blog.cordatus.ai/wp-content/uploads/2025/07/phi4.webp",use_container_width=False)
+    with tab4:
+      with st.expander("Teorema de Sklar"):
+        st.markdown("cualquier función de distribución conjunta multivariada puede ser escrita en términos de distribuciones marginales univariadas y una cópula, que describe la estructura de dependencia entre las variables.")
+        formula_sklar = r'''H(x_1, x_2, \dots, x_n) = C(F_1(x_1), F_2(x_2), \dots, F_n(x_n))'''
+        st.latex(formula_sklar)
+      with st.expander("Ley fundamental de la recuperación de la información"):
+        st.markdown("También conocidos como ataques de reconstrucción(reconstruction attacks, en inglés), afirma que demasiadas respuestas correctas a demasiadas preguntas destruyen la privacidad.")
+      with st.expander("Pérdida de información"):
+        st.markdown("Postulado por Rubin en 1993 y por Shannon en 1948, las categorías individuales y las relaciones menos probables tienden a desaparecer.")
+
+elif seccion_seleccionada == "Estadística exploratoria y descriptiva":
+    st.header("Estadística descriptiva y exploratoria")
+    tab1,tab2,tab3= st.tabs(["Estructura de los datos","Datos faltantes por variable","Muestra seleccionada"])
+    with tab2:
+      data = {
+        'Tipo': ['objeto', 'objeto', 'objeto', 'objeto', 'objeto', 'objeto',
+             'int64', 'int64', 'int64', 'int64',
+             'float64', 'float64', 'float64', 'float64',
+             'float64', 'float64'],
+      2016: [0, 0, 0, 0, 0, 0, 0, 0, 331, 331, 392, 392, 291, 291, 364, 364],
+      2017: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 21, 21, 14, 14, 19, 19],
+      2018: [0, 0, 0, 0, 0, 0, 81, 81, 0, 0, 103, 103, 132, 132, 82, 82],
+      2019: [0, 0, 0, 0, 0, 0, 81, 81, 0, 0, 127, 127, 92, 92, 101, 101],
+      2020: [0, 0, 0, 0, 0, 0, 216, 216, 0, 0, 187, 187, 252, 252, 183, 183]}
+      index_labels = [
+        'Apellidos Y Nombres', 'Grupo Referencia', 'Nombre Del Programa Académico',
+        'Departamento institución', 'Municipio institución', 'Nombre De La Institución',
+        'Percentil Comunicación Escrita', 'Puntaje Comunicación Escrita',
+        'Percentil Razonamiento Cuantitativo', 'Puntaje Razonamiento Cuantitativo',
+        'Percentil Lectura Crítica', 'Puntaje Lectura Crítica',
+        'Percentil Competencias Ciudadanas', 'Puntaje Competencias Ciudadanas',
+        'Percentil Inglés', 'Puntaje Inglés']
+      df = pd.DataFrame(data, index=index_labels)
+      df.index.name = 'Variable'
+      df.columns.name = 'Año'
+      st.markdown("Tipos de variables y valores faltantes por año: 2016-2020")
+      st.caption("Tabla 1: Conteo de valores faltantes (NaN) por variable y por año en el conjunto de datos.")
+      st.dataframe(df)
+    with tab1:
+      data = {
+      'Año': [2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024],
+      'Observaciones': [11033, 10763, 10166, 10691, 12712, 14222, 11212, 10986, 13007],
+      'Covariables': [16, 16, 16, 16, 16, 17, 17, 17, 17],
+      'Datos': [176528, 172208, 162656, 171056, 203392, 241774, 190604, 186762, 221119],
+      'Datos faltantes (%)': ['1.56', '0.06', '0.49', '0.47', '0.82', '0.00', '0.00', '0.00', '0.00'],
+      '¿Imputar?': ['Sí', 'Sí', 'Sí', 'Sí', 'Sí', 'No', 'No', 'No', 'No']}
+
+      df_resumen = pd.DataFrame(data)
+
+      df_resumen['Datos faltantes (%)'] = df_resumen['Datos faltantes (%)'].str.replace(',', '.')
+
+
+      df_resumen = df_resumen.set_index('Año')
+      df_resumen.columns.name = None # Limpia el nombre de la columna superior
+      st.markdown("Resumen de Datos Faltantes por Año (2016-2024)")
+      st.caption("Tabla 2: Conteo de observaciones, covariables y porcentaje de datos faltantes en el conjunto total.")
+      st.dataframe(df_resumen)
+    with tab3:
+      data = {
+      'Año': [2016, 2017, 2018, 2019, 2020],
+      'Evaluados': [245162, 248855, 240403, 269431, 253114],
+      'Mejores': [11033, 10763, 10166, 10691, 12712],
+      '% mejores': [4.5003, 4.3250, 4.2287, 3.9679, 5.0222]}
+      # Crear el DataFrame
+      df_estudiantes = pd.DataFrame(data)
+
+      # Formatear el porcentaje para la visualización (opcional, pero mejora la lectura)
+      df_estudiantes['% mejores'] = df_estudiantes['% mejores'].map('{:.4f}%'.format)
+
+      # Establecer el 'Año' como índice (opcional)
+      df_estudiantes = df_estudiantes.set_index('Año')
+      df_estudiantes.columns.name = None
+
+      # --- 2. Renderizar en Streamlit ---
+
+      # Título de la tabla
+      st.markdown("Estudiantes Evaluados (2016-2020)")
+      st.caption("Tabla 3: estudiantes seleccionados como los 'Mejores' por el ICFES.")
+
+      # Crear el DataFrame
+      df_estudiantes = pd.DataFrame(data)
+
+      # Formatear el porcentaje para la visualización (opcional, pero mejora la lectura)
+      df_estudiantes['% mejores'] = df_estudiantes['% mejores'].map('{:.4f}%'.format)
+
+      # Establecer el 'Año' como índice (opcional)
+      df_estudiantes = df_estudiantes.set_index('Año')
+      df_estudiantes.columns.name = None
+      st.dataframe(df_estudiantes)
+
+elif seccion_seleccionada == "Simulación de variables categóricas y entropía":
+  tab1,tab2,tab3= st.tabs(["Simulación de variables categóricas","Medidas de calidad","Concepto de entropía"])
+  with tab1:
+    st.header("Simulación de variables categóricas")
+    st.subheader("¿Cómo se simuló?")
+    st.markdown("Siguiendo el teorema de Sklar, se capturó la estructura de dependencia entre variables. Para ello se realizó la simulación por medio de un árbol de probabilidad condicional supervisado.")
+    url = f"https://docs.google.com/spreadsheets/d/18TbHDHJcjv9HZug3jEiW8RLio_RUdaCd/export?format=csv&gid=1388718316"
+    st.dataframe(pd.read_csv(url),hide_index=True)
+  with tab2:
+    with st.expander("Medidas de similitud"):
+     data = {
+        'Variable': [
+        'Grupo de Referencia',
+        'Nombre del Programa Académico',
+        'Departamento de la Institución',
+        'Municipio de la Institución',
+        'Nombre de la Institución'],
+      'TCP (%)': ['12.6%', '2.88%', '17.7%', '21.31%', '3.03%'],
+      'Chi2': [0.973, 1.000, 0.9995, 1.000, 1.000],
+      'JS': [0.0071, 0.0412, 0.0099, 0.0128, 0.0267],
+      'H': [0.0071, 0.0431, 0.0102, 0.0132, 0.0274]}
+     df_calidad = pd.DataFrame(data)
+     formatters = {
+        'Chi2': '{:.4f}'.format,
+        'JS': '{:.4f}'.format,
+        'H': '{:.4f}'.format}
+     st.caption("Tabla de calidad de las variables categóricas, donde se evalúan métricas de fidelidad.")
+     st.dataframe(df_calidad.style.format(formatters), use_container_width=True, hide_index=True)
+    with st.expander("Privacidad"):
+      data = {
+        'count': [55365.0, 55365.0],
+        'mean': [0.478077, 0.521623],
+        'std': [0.103485, 0.095807],
+        'min': [0.000000, 0.115183],
+        '25%': [0.448742, 0.473766],
+        '50%': [0.492007, 0.506168],
+        '75%': [0.526161, 0.550003],
+        'max': [0.951634, 1.000000]}
+
+      index_labels = [0, 1]  # Los valores de la columna 'Real'
+      df_descripcion = pd.DataFrame(data, index=index_labels)
+      df_descripcion.index.name = 'Real'
+      st.dataframe(df_descripcion.style.format(precision=6), use_container_width=True)
+  with tab3:
+      st.header("Concepto de entropía")
+      st.markdown("Medida de incertidubre, la cual puede ser mayor o menor en función de los estados posibles que esa variable pueda tomar.")
+      with st.expander("Manifestación"):
+       data = {
+        'Variable': ['Depto. institución', 'Municipio institución', 'Institución', 'Programa académico', 'Grupo de referencia'],
+        'Cat. Sintéticas': [27, 70, 252, 666, 23],
+        'Cat. Reales': [27, 80, 266, 710, 23],
+        'Cat. Perdidas': [0, 10, 14, 44, 0],
+        'Moda (Tabla 1)': ['Bogotá', 'Bogotá, D. C.', 'Los Andes', 'Derecho', 'Ingeniería'],
+        'Moda (Tabla 2)': ['Bogotá', 'Bogotá, D. C.', 'Los Andes', 'Derecho', 'Ingeniería']}
+       df_comparativo = pd.DataFrame(data)
+       st.dataframe(df_comparativo, use_container_width=True, hide_index=True)
+
+
+elif seccion_seleccionada == "Simulación de variables numéricas y el trilema de los datos sintéticos":
+  tab1,tab2,tab3,tab4= st.tabs(["Simulación de variables categóricas","Medidas de calidad","Trilema de los datos sintéticos","Utilidad"])
+  with tab1:
+    st.header("Simulación de variables numérica")
+    st.subheader("¿Cómo se simuló?")
+    st.markdown("Siguiendo el teorema de Sklar, se intentó capturar la estructura de dependencia entre variables. Se recurrió a cópulas gaussianas, cuyo proceso de construcción se automatizó con la librería SDV del MIT.")
+    url = f"https://docs.google.com/spreadsheets/d/1bNg1I1oo0FKlLKUbjoS3XpY7Y-PJwIiJ/export?format=csv&gid=1261021413"
+    st.dataframe(pd.read_csv(url),hide_index=True)
+  with tab2:
+    data = {
+        'Variable': [
+        'Grupo de Referencia',
+        'Nombre del Programa Académico',
+        'Departamento de la Institución',
+        'Municipio de la Institución',
+        'Nombre de la Institución'],
+      'KS complemento': [0.9127, 0.9595, 0.9102, 0.9724, 0.9579],
+      'JS': [0.0916, 0.0463, 0.1288, 0.0133, 0.1065],
+      'H': [0.1002, 0.0466, 0.1316, 0.0135, 0.1181]}
+    df_calidad = pd.DataFrame(data)
+    formatters = {
+        'Chi2': '{:.4f}'.format,
+        'JS': '{:.4f}'.format,
+        'H': '{:.4f}'.format}
+    st.caption("Tabla de calidad de las variables categóricas, donde se evalúan métricas de fidelidad.")
+    st.dataframe(df_calidad.style.format(formatters), use_container_width=True, hide_index=True)
+  with tab3:
+    with st.expander("Trilema de los datos sintéticos"):
+      st.markdown("Flexibilidad, utilidad y privacidad son los pilares de la generación de datos sintéticos, pero producto de la ley fundamental de recuperación de información se deben sacrificar dos de las tres para que la propuesta funcione." )
+  with tab4:
+
+    resultados = pd.DataFrame({
+      "Modelo": ["Referencia (Real)", "Prueba (Sintético)"],
+      "MAE": [0.6754, 1.5698],
+      "RMSE": [1.0635, 3.5409],
+      "R2": [0.9927, 0.9195]})
+    st.table(resultados)
+
+    st.markdown('''
+    - El modelo con datos reales alcanza un **R2 muy alto (0.993)**, indicando excelente ajuste.
+    - El modelo con datos sintéticos tiene un **R2 de 0.92**, mostrando que conserva bastante la información pero con mayor error (MAE y RMSE más altos).
+    ''')
+
+
+elif seccion_seleccionada == "Referencias":
+    st.header("Referencias")
+
+    st.markdown('''
+1. [Evaluating Synthetic Data: The Million-Dollar Question](https://towardsdatascience.com/evaluating-synthetic-data-the-million-dollar-question-a54701d1b621/)
+2. [ScienceDirect: Evaluating synthetic data quality](https://www.sciencedirect.com/science/article/pii/S1386505624000765)
+3. [Bluegen: How do I know that the synthetic data is of the right quality for my use case?](https://bluegen.ai/how-do-i-know-that-the-synthetic-data-is-of-the-right-quality-for-my-use-case/)
+4. [UN News: Synthetic data and statistics](https://news.un.org/es/story/2018/11/1446671)
+5. [UN: Universal Declaration of Human Rights](https://www.un.org/es/about-us/universal-declaration-of-human-rights#:~:text=Art%C3%ADculo%2012,contra%20tales%20injerencias%20o%20ataques.)
+6. [ACL Anthology 2025](https://aclanthology.org/2025.cl-1.6.pdf)
+7. [PMC Article on Synthetic Data](https://pmc.ncbi.nlm.nih.gov/articles/PMC9951365/)
+8. [ScienceDirect Article](https://www.sciencedirect.com/science/article/pii/S2001037024002393)
+9. [SCB: Statistical Analysis of Masked Data](https://www.scb.se/contentassets/ca21efb41fee47d293bbee5bf7be7fb3/statistical-analysis-of-masked-data.pdf)
+10. [US Census Technical Paper](https://www2.census.gov/ces/tp/tp-2003-10.pdf)
+11. [Royal Society: Synthetic Data Survey](https://royalsociety.org/-/media/policy/projects/privacy-enhancing-technologies/Synthetic_Data_Survey-24.pdf)
+12. [Policy Review: Politics of Synthetic Data](https://policyreview.info/articles/news/politics-of-synthetic-data-performance-metrics/1761)
+13. [UNESCO AI Ethics Recommendation](https://www.unesco.org/en/artificial-intelligence/recommendation-ethics)
+14. [IBM AI Ethics](https://www.ibm.com/think/topics/ai-ethics#:~:text=Examples%20of%20AI%20ethics%20issues,%2C%20trust%2C%20and%20technology%20misuse.)
+15. [NVIDIA Glossary: Synthetic Data Generation](https://www.nvidia.com/en-us/glossary/synthetic-data-generation/)
+16. [DataCamp Tutorial: Synthetic Data Generation](https://www.datacamp.com/tutorial/synthetic-data-generation)
+17. [SDV: Synthetic Data Vault](https://sdv.dev/)
+''', unsafe_allow_html=True)
+"""
+# Guardar el código Streamlit en un archivo
+with open("/content/streamlit_plotly_timeseries.py", "w") as f:
+    f.write(streamlit_code)
+
+# Establecer el token de autenticación de ngrok
+from pyngrok import ngrok
+ngrok.set_auth_token("2tzdV3oofirn68JeCgolauxDQUt_75mTMJ3ko2AKPPnGaxi9A")
+
+# Crear el túnel de ngrok a Streamlit en el puerto 8501
+public_url = ngrok.connect(8501)
+print(f"Streamlit app is live at: {public_url}")
+
+# Ejecutar la aplicación Streamlit en segundo plano
+!streamlit run /content/streamlit_plotly_timeseries.py &
