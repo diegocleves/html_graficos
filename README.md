@@ -1,1 +1,1 @@
-Este repositorio contiene gráficos y tableros realizados en la asignatura de "Presentación de Datos con Python". Los gráficos y tableros sobre los siniestros (accidentes) de bicicletes en Reino Unido, entre 2006 y 2018, correspondió al trabajo de primer corte.
+Este repositorio contiene gráficos y tableros realizados en la asignatura de "Presentación de Datos con Python". Los gráficos y tableros sobre los siniestros (accidentes) de bicicletes en Reino Unido, entre 2006 y 2018, correspondieron al trabajo de primer corte.
