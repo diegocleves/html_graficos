@@ -1,0 +1,439 @@
+%%capture
+!pip install streamlit-folium
+!pip install geopy
+!pip install streamlit pyngrok
+!pip install ngrok
+!pip install streamlit
+streamlit_code = """
+import streamlit as st
+import pandas as pd
+import plotly.graph_objects as go
+
+# Logo or image in the sidebar
+st.sidebar.image(
+    "https://revistaartefacto.usta.edu.co/images/LOGO-USTA-2021-Ng.png",
+    use_container_width=True
+)
+
+# Custom styles (optional)
+st.markdown(
+    '''
+    <style>
+    .reportview-container {
+        background-color: #f0f2f6;
+    }
+    .sidebar .sidebar-content {
+        background-color: #1e2a47;
+        color: #ffffff;
+    }
+    .main .block-container {
+        padding: 2rem;
+        background-color: #ffffff;
+    }
+    </style>
+    ''',
+    unsafe_allow_html=True
+)
+
+# Sidebar menu
+secciones = [
+    "Estado del Arte",
+    "Contexto",
+    "Metodología",
+    "Objetivos del proyecto",
+    "Construcción índice de hacinamiento",
+    "Hacinamiento en 2020",
+    "Hacinamiento en 2024",
+    "Brecha salarial en 2020",
+    "Brecha salarial en 2024",
+    "Medidas de Calidad",
+    "Conclusiones",
+    "Referencias"
+]
+
+st.title("Hacinamiento, Brecha salarial y salario digno en Colombia: 2020 y 2024")
+
+seccion_seleccionada = st.sidebar.radio("Selecciona una sección", secciones)
+
+# Secciones básicas
+if seccion_seleccionada == "Contexto":
+    st.header("Contexto")
+    st.write("En Colombia, persisten grandes desigualdades en las condiciones de vivienda y en el acceso a servicios básicos como el agua potable y el saneamiento. A esto se suman brechas económicas que afectan directamente la calidad de vida de los hogares. Muchas familias viven en espacios reducidos, con servicios insuficientes y en condiciones que comprometen su salud y bienestar.Este proyecto nace de la necesidad de entender mejor cómo el hacinamiento y la brecha salarial han evolucionado entre 2020 y 2024, un periodo marcado por los efectos de la pandemia y la recuperación económica.")
+elif seccion_seleccionada == "Estado del Arte":
+    st.header("Estado del Arte")
+elif seccion_seleccionada == "Metodología":
+    st.header("Metodología")
+    objetivos = [
+        "Buscamos Los datos faltantes. Al no encontrar alguno, limpiamos los datos.",
+        "Ya que, no faltaban datos y todos eran útiles, se calcularon los índices de hacinamiento, según el estrato, tipo de vivienda y relación judicial con el hogar.",
+        "Se calculó la brecha salarial, según el estrato socioeconómico y el nivel de ingreso en relación con un salario digno.",
+        "Se compararon los indicadores de hacinamiento y brecha salarial entre los años 2020 y 2024."
+    ]
+    for obj in objetivos:
+        st.markdown(f"- {obj}")
+elif seccion_seleccionada == "Objetivos del proyecto":
+    st.header("Objetivo General")
+    st.write("Analizar el comportamiento del hacinamiento y brecha salarial en Colombia en los años 2020-2024,con el propósito de comprender los cambios recientes en estos dos indicadores sociales clave y su impacto en las condiciones de vida de la población.")
+
+    st.header("Objetivos Específicos")
+    objetivos = [
+        "Calcular indicadores de hacinamiento a partir de variables como el número de habitantes del hogar, el total de personas que habitan en el lugar y la cantidad de personas que comparten en una misma habitación para dormir.",
+        "Calcular la brecha salarial entre distintos grupos poblacionales, considerando factores como el estrato socioeconómico y el nivel de ingreso en relación con un salario digno.",
+        "Comparar la evolución de los indicadores de hacinamiento y brecha salarial entre los años 2020 y 2024, identificando posibles patrones, desigualdades persistentes o mejoras significativas.",
+        "Desarrollar visualizaciones interactivas mediante herramientas de ciencia de datos en Python y Streamlit, que faciliten el análisis, la interpretación y la difusión de los hallazgos a públicos diversos, incluidos tomadores de decisiones y ciudadanía en general."
+    ]
+    for obj in objetivos:
+        st.markdown(f"- {obj}")
+
+elif seccion_seleccionada == "Construcción índice de hacinamiento":
+
+    st.title("Cálculo do Índice de Hacimento")
+
+    st.markdown("$IH = T_{h}/T_{d}$")
+
+    st.markdown("Donde:")
+    st.markdown("$T_{h}$ = Total habitantes del hogar")
+    st.markdown("$T_{d}$ = Total dormitorios")
+
+    st.subheader("Clasificación según el indicador:")
+
+    st.markdown(r'''
+    - **Sin hacinamiento**: $IH = 1$
+    - **Hacinamiento medio**: $1 < IH \leq 2$
+    - **Hacinamiento crítico**: $IH > 3$
+    - **Superávit**: $IH < 1$, es decir, más dormitorios que personas
+    ''')
+
+elif seccion_seleccionada == "Hacinamiento en 2020":
+    st.header("Índices de hacinamiento 2020")
+
+    # Datos
+    data_p4000 = {
+        'P': [1.0, 2.0, 3.0, 4.0, 5.0, 6.0],
+        'Hacinamiento crítico': [7873, 5736, 709, 345, 180, 10],
+        'Hacinamiento medio': [21566, 18212, 591, 400, 72, 8],
+        'Sin hacinamiento': [43324, 38840, 1545, 942, 57, 14],
+        'Superavit': [959, 648, 1, 2, 1, 0]
+    }
+    data_p5090 = {
+        'P': [1.0, 2.0, 3.0, 4.0, 5.0, 6.0],
+        'Hacinamiento crítico': [2911, 131, 7055, 3231, 1414, 111],
+        'Hacinamiento medio': [13417, 996, 17631, 6483, 2221, 101],
+        'Sin hacinamiento': [33425, 3131, 32219, 13295, 2484, 168],
+        'Superavit': [836, 45, 457, 246, 24, 3]
+    }
+    data_p4030 = {
+    'P': [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0],
+    'Hacinamiento crítico': [477, 8367, 4062, 1223, 158, 26, 23, 207],
+    'Hacinamiento medio': [376, 16292, 14629, 6777, 1532, 409, 275, 336],
+    'Sin hacinamiento': [336, 22272, 30400, 21744, 6016, 1972, 1108, 472],
+    'Superavit': [2, 451, 443, 448, 153, 71, 37, 0]
+   }
+    df_p4030 = pd.DataFrame(data_p4030)
+    df_p4000 = pd.DataFrame(data_p4000)
+    df_p5090 = pd.DataFrame(data_p5090)
+    categories = ['Hacinamiento crítico', 'Hacinamiento medio', 'Sin hacinamiento', 'Superavit']
+
+    # Controles
+    dataset_choice = st.radio("Selecciona el criterio a relacionar:", ["Tipo de vivienda", "Estrato socio-económico","Tipo de relación jurídica"], horizontal=True)
+    dataset_dict = {
+      "Tipo de vivienda": df_p4000,
+      "Estrato socio-económico": df_p4030,
+      "Tipo de relación jurídica": df_p5090
+    }
+    df_selected = dataset_dict[dataset_choice]
+    p_value = st.slider(
+    "Selecciona la categoría:",
+    min_value=float(df_selected['P'].min()),
+    max_value=float(df_selected['P'].max()),
+    step=1.0)
+    row = df_selected[df_selected['P'] == p_value].iloc[0]
+    y_values = [row[cat] for cat in categories]
+
+    # Gráfico
+    fig = go.Figure()
+    for cat, y in zip(categories, y_values):
+        fig.add_trace(go.Bar(name=cat, x=[cat], y=[y]))
+
+    fig.update_layout(
+        title=f"{dataset_choice} - P = {p_value}",
+        xaxis_title="Categoría de hacinamiento",
+        yaxis_title="Cantidad",
+        barmode="group"
+    )
+
+    st.plotly_chart(fig)
+    Convenciones = [
+        "Tipo de vivienda: 1. Casa, 2. Apto, 3. Cuarto(inquilinato), 4. Cuarto(otro), 5. Vivienda indigena, 6.Carpa o cueva",
+        "Relación judicial: 1. Propia(pagada), 2. Propia(pagando), 3. Arriendo, 4. Usufructo, 5. Ocupación de hecho, 6. Otra",
+    ]
+    for obj in Convenciones:
+        st.markdown(f"- {obj}")
+
+elif seccion_seleccionada == "Hacinamiento en 2024":
+    st.header("Índices de hacinamiento 2024")
+
+    # Datos
+    data_p4000 = {
+    'cat_Hacinamiento': [1, 2, 3, 4, 5, 6],
+    'Hacinamiento crítico': [12975, 7795, 804, 180, 903, 11],
+    'Hacinamiento medio': [43919, 33021, 923, 175, 380, 15],
+    'Sin hacinamiento': [95168, 85885, 3234, 640, 254, 29],
+    'Superavit': [2550, 2087, 6, 2, 1, 0]
+    }
+    data_p5090 = {
+    'cat_Hacinamiento': [1, 2, 3, 4, 5, 6,7],
+    'Hacinamiento crítico': [3643, 238, 9707, 5679, 2181, 1023, 197],
+    'Hacinamiento medio': [23221, 2220, 32549, 14257, 4111, 1629, 446],
+    'Sin hacinamiento': [61495, 7493, 73470, 33043, 5301, 3528, 880],
+    'Superavit': [1693, 154, 1609, 809, 127, 130, 124]
+    }
+    data_p4030 = {
+    'cat_Hacinamiento': [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0],
+    'Hacinamiento crítico': [781, 3714, 13109, 27, 9, 45, 155, 107, 3],
+    'Hacinamiento medio': [2241, 15444, 49696, 172, 58, 254, 717, 441, 26],
+    'Sin hacinamiento': [3808, 40629, 123211, 429, 176, 902, 2454, 697, 74],
+    'Superavit': [76, 1256, 2928, 7, 2, 21, 77, 7, 4]
+    }
+    df_p4030 = pd.DataFrame(data_p4030)
+    df_p4000 = pd.DataFrame(data_p4000)
+    df_p5090 = pd.DataFrame(data_p5090)
+    categories = ['Hacinamiento crítico', 'Hacinamiento medio', 'Sin hacinamiento', 'Superavit']
+
+    # Controles
+    dataset_choice = st.radio("Selecciona el criterio a relacionar:", ["Tipo de vivienda","Tipo de relación jurídica","Estrato socio-económico"], horizontal=True)
+    dataset_dict = {
+      "Tipo de vivienda": df_p4000,
+      "Estrato socio-económico": df_p4030,
+      "Tipo de relación jurídica": df_p5090
+    }
+    df_selected = dataset_dict[dataset_choice]
+    p_value = st.slider(
+    "Selecciona la categoría:",
+    min_value=int(df_selected['cat_Hacinamiento'].min()),
+    max_value=int(df_selected['cat_Hacinamiento'].max()),
+    step=1)
+
+    row = df_selected[df_selected['cat_Hacinamiento'] == p_value].iloc[0]
+    y_values = [row[cat] for cat in categories]
+
+    # Gráfico
+    fig = go.Figure()
+    for cat, y in zip(categories, y_values):
+        fig.add_trace(go.Bar(name=cat, x=[cat], y=[y]))
+
+    fig.update_layout(
+        title=f"{dataset_choice} - P = {p_value}",
+        xaxis_title="Categoría de hacinamiento",
+        yaxis_title="Cantidad",
+        barmode="group")
+
+    st.plotly_chart(fig)
+    Convenciones = [
+        "Tipo de vivienda: 1. Casa, 2. Apto, 3. Cuarto(inquilinato), 4. Cuarto(otro), 5. Vivienda indigena, 6.Carpa o cueva",
+        "Relación judicial: 1. Propia(pagada), 2. Propia(pagando), 3. Arriendo, 4. Usufructo, 5. Ocupación de hecho, 6. Otra",
+    ]
+    for obj in Convenciones:
+        st.markdown(f"- {obj}")
+
+elif seccion_seleccionada == "Brecha salarial en 2024":
+    st.header("Brecha salarial en 2024")
+    estratos = [1, 2, 3, 4, 5, 6]
+    ingresos_promedio_2020 = [1045791, 1381424, 1984923, 3433717, 4939534, 6608184]
+    ingresos_mediana_2020 = [950000, 1300000, 1462000, 2500000, 3500000, 4000000]
+    minimo_2020 = 1462000  # incluido el auxilio de transporte 162000
+    salario_digno_2020 = 2262567  # Según fairtrade
+
+    fig = go.Figure()
+
+    # Inicializar con Estrato 1
+    i = 0
+    fig.add_trace(go.Bar(x=["Estrato 1"], y=[ingresos_promedio_2020[i]], name="Promedio", marker_color="gray"))
+    fig.add_trace(go.Bar(x=["Estrato 1"], y=[ingresos_mediana_2020[i]], name="Mediana", marker_color="orange"))
+
+    fig.add_hline(y=minimo_2020, line=dict(dash="dot", color="blue"),
+                  annotation_text="Salario mínimo", annotation_position="top left")
+
+    fig.add_hline(y=salario_digno_2020, line=dict(dash="dot", color="red"),
+                  annotation_text="Salario digno", annotation_position="top left")
+
+    brecha_promedio = round((salario_digno_2020 - ingresos_promedio_2020[i]) / salario_digno_2020 * 100)
+    brecha_mediana = round((salario_digno_2020 - ingresos_mediana_2020[i]) / salario_digno_2020 * 100)
+
+    fig.add_annotation(x="Estrato 1", y=salario_digno_2020 + 70000,
+                       text=f"Brecha promedio: {brecha_promedio}%", showarrow=False,
+                       font=dict(color="gray", size=12), yshift=20)
+    fig.add_annotation(x="Estrato 1", y=salario_digno_2020 + 30000,
+                       text=f"Brecha mediana: {brecha_mediana}%", showarrow=False,
+                       font=dict(color="orange", size=12), yshift=20)
+
+    buttons = []
+    for idx, est in enumerate(estratos):
+        brecha_prom = round((salario_digno_2020 - ingresos_promedio_2020[idx]) / salario_digno_2020 * 100)
+        brecha_med = round((salario_digno_2020 - ingresos_mediana_2020[idx]) / salario_digno_2020 * 100)
+        buttons.append(dict(
+            label=f"Estrato {est}",
+            method="update",
+            args=[
+                {"y": [[ingresos_promedio_2020[idx]], [ingresos_mediana_2020[idx]]],
+                 "x": [[f"Estrato {est}"], [f"Estrato {est}"]]},
+                {"annotations": [
+                    dict(
+                        x=f"Estrato {est}",
+                        y=salario_digno_2020 + 180000,  # más alto que antes
+                        text=f"Brecha promedio: {brecha_prom}%",
+                        showarrow=False,
+                        font=dict(color="gray", size=12)
+                    ),
+                    dict(
+                        x=f"Estrato {est}",
+                        y=salario_digno_2020 + 120000,  # suficientemente separado
+                        text=f"Brecha mediana: {brecha_med}%",
+                        showarrow=False,
+                        font=dict(color="orange", size=12)
+                    )
+                ]}
+            ]
+        ))
+
+    fig.update_layout(
+        title="Comparación de ingresos por estrato en 2024",
+        yaxis_title="COP",
+        yaxis=dict(tickformat=","),
+        updatemenus=[dict(
+            active=0,
+            buttons=buttons,
+            direction="down",
+            showactive=True,
+            x=0,
+            xanchor="left",
+            y=1.15,
+            yanchor="top"
+        )],
+        barmode="group",
+        height=500
+    )
+
+    st.plotly_chart(fig)
+
+elif seccion_seleccionada == "Brecha salarial en 2020":
+    st.header("Brecha salarial en 2020")
+    estratos = [1, 2, 3, 4, 5, 6]
+    ingresos_promedio_2020 = [1045791, 1381424, 1984923, 3433717, 4939534, 6608184]
+    ingresos_mediana_2020 = [950000, 1300000, 1462000, 2500000, 3500000, 4000000]
+    minimo_2020 = 1462000  #incluido el auxilio  de transporte 162000
+    salario_digno_2020 = 2262567  #Según fairtrade
+
+    fig = go.Figure()
+
+    # Inicializar con Estrato 1
+    i = 0
+    fig.add_trace(go.Bar(x=["Estrato 1"], y=[ingresos_promedio_2020[i]], name="Promedio", marker_color="gray"))
+    fig.add_trace(go.Bar(x=["Estrato 1"], y=[ingresos_mediana_2020[i]], name="Mediana", marker_color="orange"))
+
+    fig.add_hline(y=minimo_2020, line=dict(dash="dot", color="blue"),
+                  annotation_text="Salario mínimo", annotation_position="top left")
+
+    fig.add_hline(y=salario_digno_2020, line=dict(dash="dot", color="red"),
+                  annotation_text="Salario digno", annotation_position="top left")
+
+    brecha_promedio = round((salario_digno_2020 - ingresos_promedio_2020[i]) / salario_digno_2020 * 100)
+    brecha_mediana = round((salario_digno_2020 - ingresos_mediana_2020[i]) / salario_digno_2020 * 100)
+
+    fig.add_annotation(x="Estrato 1", y=salario_digno_2020 + 70000,
+                       text=f"Brecha promedio: {brecha_promedio}%", showarrow=False,
+                       font=dict(color="gray", size=12), yshift=20)
+    fig.add_annotation(x="Estrato 1", y=salario_digno_2020 + 30000,
+                       text=f"Brecha mediana: {brecha_mediana}%", showarrow=False,
+                       font=dict(color="orange", size=12), yshift=20)
+
+    buttons = []
+    for idx, est in enumerate(estratos):
+        brecha_prom = round((salario_digno_2020 - ingresos_promedio_2020[idx]) / salario_digno_2020 * 100)
+        brecha_med = round((salario_digno_2020 - ingresos_mediana_2020[idx]) / salario_digno_2020 * 100)
+        buttons.append(dict(
+            label=f"Estrato {est}",
+            method="update",
+            args=[
+                {"y": [[ingresos_promedio_2020[idx]], [ingresos_mediana_2020[idx]]],
+                 "x": [[f"Estrato {est}"], [f"Estrato {est}"]]},
+                {"annotations": [
+                    dict(
+                        x=f"Estrato {est}",
+                        y=salario_digno_2020 + 180000,  # más alto que antes
+                        text=f"Brecha promedio: {brecha_prom}%",
+                        showarrow=False,
+                        font=dict(color="gray", size=12)
+                    ),
+                    dict(
+                        x=f"Estrato {est}",
+                        y=salario_digno_2020 + 120000,  # suficientemente separado
+                        text=f"Brecha mediana: {brecha_med}%",
+                        showarrow=False,
+                        font=dict(color="orange", size=12)
+                    )
+                ]}
+            ]
+        ))
+
+    fig.update_layout(
+        title="Comparación de ingresos por estrato en 2020",
+        yaxis_title="COP",
+        yaxis=dict(tickformat=","),
+        updatemenus=[dict(
+            active=0,
+            buttons=buttons,
+            direction="down",
+            showactive=True,
+            x=0,
+            xanchor="left",
+            y=1.15,
+            yanchor="top"
+        )],
+        barmode="group",
+        height=500
+    )
+
+    st.plotly_chart(fig)
+elif seccion_seleccionada == "Medidas de Calidad":
+    st.header("Medidas de Calidad")
+
+elif seccion_seleccionada == "Conclusiones":
+    st.header("Conclusiones")
+    Conclusiones = ["Se evidencia durante el 2020 un mayor hacinamiento. No obstante, las comunidades indigenas presentan un hacinamiento crítico  mayoritario.",
+    "Aunque el salario mínimo aumentó de $980.657 COP$ en 2020 a $1.462.000 COP$ en 2024, el salario digno también subió a $2.262.567 COP$. Por lo cual, los ingresos de los estratos más bajos no crecieron proporcionalmente.",
+    "Particularmente preocupante es el caso del estrato 3, donde la brecha respecto al salario digno aumentó del 3% al 12% en promedio."]
+    for obj in Conclusiones:
+        st.markdown(f"- {obj}")
+
+
+elif seccion_seleccionada == "Referencias":
+    st.header("Referencias")
+    Referencias = [
+        "Banco Mundial. (2022). Acceso a servicios de agua y saneamiento en Colombia. Recuperadode https://www.bancomundial.org",
+        "Departamento Administrativo Nacional de Estad ́ıstica – DANE. (2020). Encuesta Nacionalde Calidad de Vida 2020. Bogot ́a, Colombia. Recuperado de https://www.dane.gov.co",
+        "Fairtrade International. (2024). Living Wage Updates Colombia Banana. Recuperado de https://files.fairtrade.net",
+        "Instituto Anker. (2020). Living Wage for Rural Risaralda, Colombia. Anker Research Network. Recuperado de https://www.ankerresearchinstitute.org",
+        "La Rep ́ublica. (2023, 15 de junio). Un cuarto de los colombianos no tiene acceso adecuadoal agua potable. Recuperado de https://www.larepublica.co",
+        "UNICEF Colombia. (2023). Estad ́ısticas sobre agua, saneamiento e higiene. Recuperado de https://www.unicef.org/colombia",
+        "Organizaci ́on Mundial de la Salud (OMS) & CEPAL. (2021). Lineamientos para la mediciónn del hacinamiento y condiciones de vivienda en Am ́erica Latina. Recuperado de https://www.cepal.org"
+    ]
+    for obj in Referencias:
+        st.markdown(f"- {obj}")
+
+
+"""
+# Guardar el código Streamlit en un archivo
+with open("/content/streamlit_plotly_timeseries.py", "w") as f:
+    f.write(streamlit_code)
+
+# Establecer el token de autenticación de ngrok
+from pyngrok import ngrok
+ngrok.set_auth_token("2tzdV3oofirn68JeCgolauxDQUt_75mTMJ3ko2AKPPnGaxi9A")
+
+# Crear el túnel de ngrok a Streamlit en el puerto 8501
+public_url = ngrok.connect(8501)
+print(f"Streamlit app is live at: {public_url}")
+
+# Ejecutar la aplicación Streamlit en segundo plano
+!streamlit run /content/streamlit_plotly_timeseries.py &
